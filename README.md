@@ -1,17 +1,12 @@
-# React Native Reproducer
+# A link that relaunches a reclaimed Android app never reaches JavaScript
 
-> [!IMPORTANT]  
-> Do not just **fork** this repository, but use instead the [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/reproducer-react-native/generate) button on GitHub.
+React Native 0.87.1, from the [React Native reproducer template](https://github.com/react-native-community/reproducer-react-native). `App.tsx` shows `Linking.getInitialURL()` and the last `url` event, and the template's `singleTask` `MainActivity` takes `reproducer://` links.
 
-This is the React Native **reproducer** template. 
+## Steps
 
-You can use this template to create a minimal, complete, and reproducible project that the community can use to understand what's your problem. You can read more about the principles of a good reproducible project [here](https://stackoverflow.com/help/mcve).
+1. Build and install the release APK: `cd ReproducerApp/android && ./gradlew assembleRelease && adb install -r app/build/outputs/apk/release/app-release.apk`.
+2. Open the first link: `adb shell am start -a android.intent.action.VIEW -d reproducer://first com.reproducerapp`.
+3. Background the app and let Android end its process while the task stays in Recents: `adb shell input keyevent KEYCODE_HOME`, `adb shell am start -a android.settings.SETTINGS`, `adb shell input keyevent KEYCODE_HOME`, then `adb shell am kill com.reproducerapp` until `adb shell pidof com.reproducerapp` prints nothing.
+4. Open the second link: `adb shell am start -a android.intent.action.VIEW -d reproducer://second com.reproducerapp`.
 
-This template is up to date with `react-native@latest` as you can find it on [npm](https://www.npmjs.com/package/react-native/v/latest).
-
-## How to use this repository
-
-1. Click on [![Use this template](https://img.shields.io/badge/-Use%20this%20template-brightgreen)](https://github.com/cortinico/reproducer-react-native/generate) button to create a new repository starting from this one.
-2. Git clone your repository locally.
-3. Edit the project to reproduce the failure you're seeing.
-4. Push your changes, so that Github Actions can run the CI.
+On `main` the screen shows `getInitialURL(): reproducer://first` and `last url event: null`. The `verify/set-intent` branch adds `setIntent(intent)` to `MainActivity.onNewIntent`, and the screen shows `getInitialURL(): reproducer://second`.
