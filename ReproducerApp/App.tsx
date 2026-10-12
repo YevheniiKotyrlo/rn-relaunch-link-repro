@@ -1,37 +1,32 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * Reproducer: the link that relaunches an Android app after its process was killed.
  *
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
+import { Linking, StyleSheet, Text, View } from 'react-native';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [initialUrl, setInitialUrl] = useState<string | null>();
+  const [lastUrlEvent, setLastUrlEvent] = useState<string | null>(null);
 
-  return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
-  );
-}
-
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
+  useEffect(() => {
+    Linking.getInitialURL().then(setInitialUrl);
+    const subscription = Linking.addEventListener('url', ({ url }) =>
+      setLastUrlEvent(url),
+    );
+    return () => subscription.remove();
+  }, []);
 
   return (
     <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
+      <Text style={styles.line} testID="initial-url">
+        getInitialURL(): {initialUrl === undefined ? '…' : String(initialUrl)}
+      </Text>
+      <Text style={styles.line} testID="url-event">
+        last url event: {String(lastUrlEvent)}
+      </Text>
     </View>
   );
 }
@@ -39,6 +34,12 @@ function AppContent() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  line: {
+    fontSize: 18,
+    marginVertical: 8,
   },
 });
 
